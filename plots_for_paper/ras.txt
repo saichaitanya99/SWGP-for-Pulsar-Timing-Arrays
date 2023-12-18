@@ -1,0 +1,11 @@
+ras = ["21h45m50.4588s","10h22m57.9992s","00h30m27.4309798s",'17h44m29.390963s','17h30m21.6825641s','14h00m37.0139964s','13h00m03.1304485s']
+decs = ['-07:50:18.514s',' +10d01m52.78s','+04:51:39.49557s','-11:34:54.5746s','-23:04:30.85061s','-14:31:47.03339s','+12:40:54.50481s']
+labels=['J2145-0750','J1022+1001','J0030+0451','J1744-1134','J1730-2304','J1400-1431','J1300+1240']
+
+
+def solar_angle(ra,dec,mjd):
+    coo_psr = SkyCoord(ra,dec, frame=FK5)
+    t = Time(mjd, format='mjd')
+    sunpos = get_sun(t)
+    sep = sunpos.separation(coo_psr)
+    return sep.value#.degree[0]

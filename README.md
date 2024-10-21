@@ -68,3 +68,8 @@ Arguments
 --no_sample (optional, bool): If this flag is set, the script will only display all the parameters and priors without performing any sampling.
 
 --hypermodel (optional, bool): Use this flag for hypermodel comparisons. Currently, the script compares the Nitu2024 and Susarla2024 models. More custom models will be added in the future.
+
+
+
+Nitu 2024: https://arxiv.org/abs/2401.07917#
+Susarla 2024: https://arxiv.org/abs/2409.09838

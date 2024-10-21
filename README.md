@@ -73,3 +73,5 @@ Arguments
 
 Nitu 2024: https://arxiv.org/abs/2401.07917#
 Susarla 2024: https://arxiv.org/abs/2409.09838
+
+If you would like to use this code for your work, cite Susarla 2024 and if you are using the Nitu 2024 model, then, please cite that as well. The references will be updated shortly. 

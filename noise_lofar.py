@@ -62,7 +62,7 @@ parser.add_argument('-params_plot', required=False, type=str, nargs='+', help='P
 parser.add_argument('--plot_after_fitting', action='store_true', help='If you want to see how the residuals look before the start of sampling. If you see phase wrapping in the residuals, please take necessary action.')
 parser.add_argument('--nofit', action='store_true', help='If you do not want to fit the parfile and timfile')
 parser.add_argument('-chain_dir', required=False, help='Provide the path to the chain directory if you just want to plot the posteriors and the time domain reconstruction')
-parser.add_argument('-nsample', required=False, type=int, default = 1e6, help='No of samples for PTMCMC. Default is 1 million samples. ')
+parser.add_argument('-nsample', required=False, type=int, default = 1e6, help='No of samples for PTMCMC. Default is 1 million samples. If you are using hypermodel, then the no of samples are defaulted to 2 million samples.')
 parser.add_argument('--dmgp', action='store_true', help='Use this flag for dmgp')
 parser.add_argument('--dmgp_sample_nbins', action='store_true', help='Use this flag for dmgp_sample_nbins. This will also sample the number of bins for dmgp. You can use this flag only if you are using dmgp')
 parser.add_argument('-dmgp_nbins', required=False, default=50, type=int, help='Specify bins for DMGP, Default is 50')
@@ -793,7 +793,10 @@ if args.hypermodel:
 
 
     # Define number of iteration to draw
-    nsamples = 2e6
+    if args.nsample:
+        nsamples = args.nsample
+    else:
+        nsamples = 2e6
 
     os.system('mkdir '+outdir)
 

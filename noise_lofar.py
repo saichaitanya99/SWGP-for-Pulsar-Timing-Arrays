@@ -58,7 +58,7 @@ parser.add_argument('-timfile', required=False, type=str, nargs='+', help='timfi
 parser.add_argument('-out_dir', required=False, type=str, help='Provide the path to the output_dir. You need to provide one if the intention is noise analysis')
 parser.add_argument('-nfit', required=False, type=int, default=0, help='No of fits for libstempo. Default is 0.')
 parser.add_argument('--just_plot', action='store_true', help='If you just want to plot the posteriors and the time domain reconstruction')
-parser.add_argument('-params_plot', required=False, type=str, nargs='+', help='Provide the parameters to be plotted. You can provide multiple parameters to be plotted. If you do not provide this argument, then all the parameters will be plotted. The possible parameters are efac, equad, red_noise, wn, dm_gp, gamma_sw, A_sw, n_earth.')
+parser.add_argument('-params_plot', required=False, type=str, nargs='+', help='Provide the parameters to be plotted. You can provide multiple parameters to be plotted. If you do not provide this argument, then all the parameters will be plotted. The possible parameters are efac, equad, red_noise, wn, dm_gp, gp_sw, n_earth.')
 parser.add_argument('--plot_after_fitting', action='store_true', help='If you want to see how the residuals look before the start of sampling. If you see phase wrapping in the residuals, please take necessary action.')
 parser.add_argument('--nofit', action='store_true', help='If you do not want to fit the parfile and timfile')
 parser.add_argument('-chain_dir', required=False, help='Provide the path to the chain directory if you just want to plot the posteriors and the time domain reconstruction')

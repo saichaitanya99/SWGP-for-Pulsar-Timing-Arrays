@@ -19,7 +19,7 @@ Arguments
 
 --just_plot (optional, bool): If this flag is set, the script will only plot the posteriors and the time domain reconstruction, skipping any fitting procedures.
 
--params_plot (optional, str): Provide the parameters you wish to plot. Multiple parameters can be specified. If this argument is omitted, all parameters will be plotted. The possible parameters include: efac, equad, red_noise, wn, dm_gp, gamma_sw, A_sw, and n_earth.
+-params_plot (optional, str): Provide the parameters you wish to plot. Multiple parameters can be specified. If this argument is omitted, all parameters will be plotted. The possible parameters include: efac, equad, red_noise, wn, dm_gp, gp_sw, and n_earth.
 
 --plot_after_fitting (optional, bool): If set, the script will show how the residuals appear before the sampling begins. If phase wrapping is observed in the residuals, necessary actions may need to be taken.
 

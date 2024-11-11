@@ -120,23 +120,26 @@ def get_plot_labels(params, psrname, args):
     """Generates plot labels based on selected parameters."""
     if args.params_plot:
         matching_params = [p for p in params if any(param in p for param in args.params_plot)]
-        return matching_params
+        matching_indices = [params.index(p) for p in matching_params]
+        return matching_params,matching_indices
     else:
         if len(psrname) > 1:
-            return params
+            return params, np.arange(len(params))
         else:
-            return [p.replace(psrname[0] + "_", "") for p in params]
+            return [p.replace(psrname[0] + "_", "") for p in params], np.arange(len(params))
 
 
 def plot_corner(ch, burn, idxs, labels, outdir, plotname):
     """Plots corner plot using MCMC chain data."""
+    print(labels)
+    print("Plotting corner plot")
     fig = corner.corner(ch[burn:, idxs], bins=30, labels=labels, hist_kwargs={'density': True}, plot_datapoints=True, color='r', show_titles=True)
     plt.savefig(f'{outdir}/{plotname}.png')
 
 
 def plot_residuals(ltpsr, t, outdir, recons_plot):
     """Plots TOA residuals and time-domain reconstructions."""
-    mask = np.argsort(ltpsr.toas())
+    mask = np.argsort(ltpsr.toas)
     fig = plt.figure(figsize=(8, 6))
     spec = gridspec.GridSpec(ncols=1, nrows=2, height_ratios=[4, 1], hspace=0.01)
     
@@ -146,11 +149,11 @@ def plot_residuals(ltpsr, t, outdir, recons_plot):
     ax0.set_ylabel("Residuals", fontsize=11, fontweight='bold')
 
     for i in range(len(t[0])):
-        ax0.plot(ltpsr.toas()[mask], t[0, i, :], color='coral', alpha=0.3)
+        ax0.plot(ltpsr.toas[mask], t[0, i, :], color='coral', alpha=0.3)
     
     means = np.mean(t[0, :, :], axis=0)
-    ax0.errorbar(ltpsr.toas(), ltpsr.residuals(), yerr=1e-6 * ltpsr.toaerrs, fmt='.', alpha=0.2, label="Original TOAs")
-    ax0.plot(ltpsr.toas()[mask], means, color='r', lw=2, alpha=0.3, label="Recovered signal")
+    ax0.errorbar(ltpsr.toas, ltpsr.residuals, yerr=1e-6 * ltpsr.toaerrs, fmt='.', alpha=0.2, label="Original TOAs")
+    ax0.plot(ltpsr.toas[mask], means, color='r', lw=2, alpha=0.3, label="Recovered signal")
     ax0.axhline(0., ls=':', c='k', lw=3)
     ax0.legend()
 
@@ -158,7 +161,7 @@ def plot_residuals(ltpsr, t, outdir, recons_plot):
     ax1.grid()
     ax1.set_ylabel("Recovered-original", fontsize=11, fontweight='bold')
     ax1.set_xlabel('MJD', fontsize=11, fontweight='bold')
-    ax1.plot(ltpsr.toas()[mask], means - ltpsr.residuals(), color='r', lw=2, alpha=0.3, label="Difference")
+    ax1.plot(ltpsr.toas[mask], means - ltpsr.residuals, color='r', lw=2, alpha=0.3, label="Difference")
     
     plt.savefig(f'{outdir}/{recons_plot}.png')
 
@@ -167,9 +170,11 @@ def save_reconstructed_toas(outdir, psrname, ltpsr, means, toa_rec_err, DM_SW, D
     """Saves reconstructed TOAs and DM data."""
     toa_rec = np.column_stack((ltpsr.toas(), means, toa_rec_err))
     np.savetxt(f'{outdir}/{psrname[0]}_TOA_rec.txt', toa_rec, delimiter=' ')
-    
-    np.savetxt(f'{outdir}/{psrname[0]}_DM_SW.txt', DM_SW, delimiter=' ')
-    np.savetxt(f'{outdir}/{psrname[0]}_DM_COMB.txt', DM_COMB, delimiter=' ')
+
+    dm_rec_sw =np.column_stack((ltpsr.toas(), np.mean(DM_SW[:,:], axis=0),np.std(DM_SW[:,:], axis=0)))
+    dm_rec_comb = np.column_stack((ltpsr.toas(), np.mean(DM_COMB[:,:], axis=0),np.std(DM_COMB[:,:], axis=0)))
+    np.savetxt(f'{outdir}/{psrname[0]}_DM_SW.txt', dm_rec_sw, delimiter=' ')
+    np.savetxt(f'{outdir}/{psrname[0]}_DM_COMB.txt', dm_rec_comb, delimiter=' ')
 
 
 def plotting(outdir=None, pta=None, psr=None, plotname=None, recons_plot=None):
@@ -189,10 +194,10 @@ def plotting(outdir=None, pta=None, psr=None, plotname=None, recons_plot=None):
     burn = int(0.25 * ch.shape[0])
 
     # Get plot labels
-    labels = get_plot_labels(params, psrname, args)
+    labels,idxs = get_plot_labels(params, psrname, args)
 
     # Plot corner plot
-    plot_corner(ch, burn, idxs=np.arange(len(params)), labels=labels, outdir=outdir, plotname=plotname)
+    plot_corner(ch, burn, idxs=idxs, labels=labels, outdir=outdir, plotname=plotname)
 
     # Time-domain reconstruction (handling multiple scenarios)
     ch_idxs = 100 * [np.argmax(ch[:, -3])]
@@ -200,12 +205,12 @@ def plotting(outdir=None, pta=None, psr=None, plotname=None, recons_plot=None):
 
     # Reconstruct DM (handling solar wind and noise models)
     if args.swgp and args.nesw:
-        DM_sw = get_tdelay_from_chains(pta, psr, ch, params, signames=['gp_sw', 'n_earth'], plttypes=['dm', 'dm'], ch_idxs=ch_idxs)
-        DM_comb = get_tdelay_from_chains(pta, psr, ch, params, signames=['gp_sw', 'n_earth', 'dm_gp', 'linear_timing_model'], plttypes=['dm', 'dm', 'dm', 'dm'], ch_idxs=ch_idxs)
+        DM_sw = get_tdelay_from_chains(pta, psr, ch, params, signames=['gp_sw', 'n_earth'], plttypes=['dm', 'dm'], ch_idxs=ch_idxs,separe_signals=False)
+        DM_comb = get_tdelay_from_chains(pta, psr, ch, params, signames=['gp_sw', 'n_earth', 'dm_gp', 'linear_timing_model'], plttypes=['dm', 'dm', 'dm', 'dm'], ch_idxs=ch_idxs, separe_signals=False)
 
     elif args.swsigma and args.nesw:
-        DM_sw = get_tdelay_from_chains(pta, psr, ch, params, signames=['SW_sigma', 'n_earth'], plttypes=['dm', 'dm'], ch_idxs=ch_idxs)
-        DM_comb = get_tdelay_from_chains(pta, psr, ch, params, signames=['SW_sigma', 'n_earth', 'dm_gp', 'linear_timing_model'], plttypes=['dm', 'dm', 'dm', 'dm'], ch_idxs=ch_idxs)
+        DM_sw = get_tdelay_from_chains(pta, psr, ch, params, signames=['SW_sigma', 'n_earth'], plttypes=['dm', 'dm'], ch_idxs=ch_idxs, separe_signals=False)
+        DM_comb = get_tdelay_from_chains(pta, psr, ch, params, signames=['SW_sigma', 'n_earth', 'dm_gp', 'linear_timing_model'], plttypes=['dm', 'dm', 'dm', 'dm'], ch_idxs=ch_idxs, separe_signals=False)
 
     # Plot residuals and reconstruction
     plot_residuals(psr, t, outdir, recons_plot)

@@ -221,7 +221,7 @@ def plotting(outdir=None, pta=None, psr=None, plotname=None, recons_plot=None):
 
 
 def common_solar_wind(n_earth=None, ACE_prior=False, include_swgp=True,
-                     swgp_prior=None, swgp_basis=None, Tspan=None):
+                     swgp_prior=None, swgp_basis=None, Tspan=None,include_n_earth=True):
     """
     Returns Solar Wind DM noise model. Best model from Hazboun, et al (in prep)
         Contains a single mean electron density with an auxiliary perturbation
@@ -244,18 +244,19 @@ def common_solar_wind(n_earth=None, ACE_prior=False, include_swgp=True,
         frequencies (1/Tspan,15/Tspan).
 
     """
+    sw_model = None
+    if include_n_earth:
+        if n_earth is None and not ACE_prior:
+            n_earth = parameter.Uniform(0, 25)('n_earth')
+            #n_earth = parameter.Uniform(0,20,size=n_earth_bins)('n_earth')
+        elif n_earth is None and ACE_prior:
+            n_earth = ACE_SWEPAM_Parameter()('n_earth')
+        else:
+            pass
 
-    if n_earth is None and not ACE_prior:
-        n_earth = parameter.Uniform(0, 25)('n_earth')
-        #n_earth = parameter.Uniform(0,20,size=n_earth_bins)('n_earth')
-    elif n_earth is None and ACE_prior:
-        n_earth = ACE_SWEPAM_Parameter()('n_earth')
-    else:
-        pass
-
-    deter_sw = solar_wind(n_earth=n_earth)#, n_earth_bins=n_earth_bins)
-    mean_sw = deterministic_signals.Deterministic(deter_sw, name='n_earth')
-    sw_model = mean_sw
+        deter_sw = solar_wind(n_earth=n_earth)#, n_earth_bins=n_earth_bins)
+        mean_sw = deterministic_signals.Deterministic(deter_sw, name='n_earth')
+        sw_model = mean_sw
 
     cutoff = args.cutoff
     if include_swgp:
@@ -916,8 +917,19 @@ def setup_noise_model(args, psrs, parfile, timfile, psrname, outdir, plotname, r
         if not args.nocutoff:
             freqs = freqs[1/freqs > args.cutoff * yr_in_sec]
         s += common_solar_wind(ACE_prior=False, include_swgp=True, swgp_prior=args.swgp_basis, 
-                               swgp_basis=args.swgp_basis, Tspan=tspan)
+                               swgp_basis=args.swgp_basis, Tspan=tspan, include_n_earth=True)
         update_filenames(f"_nesw_swgp_{len(freqs)}bins")
+    
+    elif args.swgp:
+        tspan = model_utils.get_tspan(psrs) if len(psrname) > 1 else psrs.toas.max() - psrs.toas.min()
+        print("SWGP is being used")
+        freqs = np.linspace(1/tspan, args.swgp_nbins/tspan, args.swgp_nbins)
+        if not args.nocutoff:
+            freqs = freqs[1/freqs > args.cutoff * yr_in_sec]
+        s += common_solar_wind(ACE_prior=False, include_swgp=True, swgp_prior=args.swgp_basis, 
+                               swgp_basis=args.swgp_basis, Tspan=tspan, include_n_earth=False)
+        update_filenames(f"_swgp_{len(freqs)}bins")
+        
     elif args.nesw:
         tspan = model_utils.get_tspan(psrs) if len(psrname) > 1 else psrs.toas.max() - psrs.toas.min()
         s += common_solar_wind(ACE_prior=False, include_swgp=False, Tspan=tspan)

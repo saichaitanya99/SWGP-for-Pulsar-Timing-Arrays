@@ -244,7 +244,6 @@ def common_solar_wind(n_earth=None, ACE_prior=False, include_swgp=True,
         frequencies (1/Tspan,15/Tspan).
 
     """
-    sw_model = None
     if include_n_earth:
         if n_earth is None and not ACE_prior:
             n_earth = parameter.Uniform(0, 25)('n_earth')
@@ -304,7 +303,11 @@ def common_solar_wind(n_earth=None, ACE_prior=False, include_swgp=True,
         
             
         gp_sw = gp_signals.BasisGP(sw_prior, sw_basis, name='gp_sw')
-        sw_model += gp_sw
+        if include_n_earth:
+            sw_model += gp_sw
+        else:
+            sw_model = gp_sw
+        
 
 
     return sw_model
@@ -929,7 +932,7 @@ def setup_noise_model(args, psrs, parfile, timfile, psrname, outdir, plotname, r
         s += common_solar_wind(ACE_prior=False, include_swgp=True, swgp_prior=args.swgp_basis, 
                                swgp_basis=args.swgp_basis, Tspan=tspan, include_n_earth=False)
         update_filenames(f"_swgp_{len(freqs)}bins")
-        
+
     elif args.nesw:
         tspan = model_utils.get_tspan(psrs) if len(psrname) > 1 else psrs.toas.max() - psrs.toas.min()
         s += common_solar_wind(ACE_prior=False, include_swgp=False, Tspan=tspan)

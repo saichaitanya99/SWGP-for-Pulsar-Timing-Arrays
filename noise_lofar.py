@@ -212,6 +212,10 @@ def plotting(outdir=None, pta=None, psr=None, plotname=None, recons_plot=None):
         DM_sw = get_tdelay_from_chains(pta, psr, ch, params, signames=['SW_sigma', 'n_earth'], plttypes=['dm', 'dm'], ch_idxs=ch_idxs, separe_signals=False)
         DM_comb = get_tdelay_from_chains(pta, psr, ch, params, signames=['SW_sigma', 'n_earth', 'dm_gp', 'linear_timing_model'], plttypes=['dm', 'dm', 'dm', 'dm'], ch_idxs=ch_idxs, separe_signals=False)
 
+    elif args.swgp:
+        DM_sw = get_tdelay_from_chains(pta, psr, ch, params, signames=['gp_sw','linear_timing_model'], plttypes=['dm','dm'], ch_idxs=ch_idxs, separe_signals=False)
+        DM_comb = get_tdelay_from_chains(pta, psr, ch, params, signames=['gp_sw', 'dm_gp', 'linear_timing_model'], plttypes=['dm', 'dm', 'dm'], ch_idxs=ch_idxs, separe_signals=False)
+
     # Plot residuals and reconstruction
     plot_residuals(psr, t, outdir, recons_plot)
 

@@ -58,7 +58,7 @@ parser.add_argument('-timfile', required=False, type=str, nargs='+', help='timfi
 parser.add_argument('-out_dir', required=False, type=str, help='Provide the path to the output_dir. You need to provide one if the intention is noise analysis')
 parser.add_argument('-nfit', required=False, type=int, default=0, help='No of fits for libstempo. Default is 0.')
 parser.add_argument('--just_plot', action='store_true', help='If you just want to plot the posteriors and the time domain reconstruction')
-parser.add_argument('-params_corner_plot', required=False, type=str, nargs='+', help='Provide the parameters to be plotted. You can provide multiple parameters to be plotted. The possible parameters are red_noise, wn, dm_gp, gp_sw, n_earth. While sampling, if the number of parameters are more than 10, then the code will exclude plotting the WN parameters.')
+parser.add_argument('-params_plot', required=False, type=str, nargs='+', help='Provide the parameters to be plotted. You can provide multiple parameters to be plotted. The possible parameters are red_noise, wn, dm_gp, gp_sw, n_earth. While sampling, if the number of parameters are more than 10, then the code will exclude plotting the WN parameters.')
 parser.add_argument('--plot_after_fitting', action='store_true', help='If you want to see how the residuals look before the start of sampling. If you see phase wrapping in the residuals, please take necessary action.')
 parser.add_argument('--nofit', action='store_true', help='If you do not want to fit the parfile and timfile')
 parser.add_argument('-chain_dir', required=False, help='Provide the path to the chain directory if you just want to plot the posteriors and the time domain reconstruction')
@@ -265,6 +265,7 @@ def common_solar_wind(n_earth=None, ACE_prior=False, include_swgp=True,
         mean_sw = deterministic_signals.Deterministic(deter_sw, name='n_earth')
         sw_model = mean_sw
 
+    print(f'Using {swgp_basis} basis for SWGP')
     cutoff = args.cutoff
     if include_swgp:
 
@@ -272,7 +273,8 @@ def common_solar_wind(n_earth=None, ACE_prior=False, include_swgp=True,
             # dm noise parameters that are common
             if Tspan is not None:
                 freqs = np.linspace(1/Tspan, args.swgp_nbins/Tspan, args.swgp_nbins)
-                freqs = freqs[1/freqs > cutoff*yr_in_sec]
+                if not args.nocutoff:
+                    freqs = freqs[1/freqs > cutoff*yr_in_sec]
                 log10_rho = parameter.Uniform(-4,9, size=len(freqs))
                 print(f"{len(freqs)} bins for SWGP are being used")
                 sw_basis = createfourierdesignmatrix_solar_dm(modes=freqs)
@@ -939,7 +941,7 @@ def setup_noise_model(args, psrs, parfile, timfile, psrname, outdir, plotname, r
             freqs = freqs[1/freqs > args.cutoff * yr_in_sec]
         s += common_solar_wind(ACE_prior=False, include_swgp=True, swgp_prior=args.swgp_basis, 
                                swgp_basis=args.swgp_basis, Tspan=tspan, include_n_earth=False)
-        update_filenames(f"_swgp_{len(freqs)}bins")
+        update_filenames(f"_swgp_{len(freqs)}bins_{args.swgp_basis}")
 
     elif args.nesw:
         tspan = model_utils.get_tspan(psrs) if len(psrname) > 1 else psrs.toas.max() - psrs.toas.min()
